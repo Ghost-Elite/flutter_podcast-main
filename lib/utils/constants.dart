@@ -16,6 +16,7 @@ const dir = '/storage/emulated/0/Download';
 const portName = 'download_port';
 const kPrimaryColor = Color(0xFFebbe8b);
 const String baseUrl = "https://seytutefes.com/api/";
+const String baseUrls = "seytutefes.com";
 
 // playlist songs
 List<Audio> songs = [

@@ -1,10 +1,11 @@
 import 'dart:convert';
-import 'dart:isolate';
+import 'dart:developer';
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:external_path/external_path.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_podcast/pages/export_page.dart';
 import 'package:flutter_podcast/widgets/export_widgets.dart';
@@ -13,6 +14,7 @@ import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:remixicon/remixicon.dart';
+import '../models/resources.dart';
 
 class ResourcePage extends StatefulWidget {
   ResourcePage({Key? key}) : super(key: key);
@@ -23,36 +25,49 @@ class ResourcePage extends StatefulWidget {
 
 class _ResourcePageState extends State<ResourcePage> {
   TextEditingController searchController = TextEditingController();
-  List colors = [
-    Color(0xFF303D00),
-    Color(0xFF2C92F0),
-    Color(0xFFED3D05),
-    Color(0xFFFA7B06),
-    Color(0xFF16A925),
-    Color(0xFF3AAD7D),
-    Color(0xFF301D58),
-    Color(0xFFDF17CB),
-    Color(0xFF6D3986),
-    Color(0xFF252525),
-    Color(0xFFA4C639),
-    Color(0xFF005062),
-  ];
-  var dataUrlResouces;
 
-  Future<void> getResources() async {
+  Resources? resources;
+  List<DataResouces> _posts = [];
+  bool  _isFistLoadRunning = false;
+  /*Future<void> getResources() async {
     try {
       String endpoint = "resources";
-      var url = "${baseUrl + endpoint}";
+      var url = "${baseUrls + endpoint}";
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
+        print(response.body);
         setState(() {
           dataUrlResouces = data;
         });
-        // print(dataMocs['data'][0]['image']);
+        print(dataUrlResouces);
       }
     } on Exception catch (e) {
       print(e.toString());
+    }
+  }*/
+  void _publicationLoad() async {
+    try {
+      //final url = Uri.https(baseUrl, "api/resources");
+      //String endpoint = "resources";
+      //var url = "${baseUrls + endpoint}";
+      final res = await http.get(Uri.parse("https://seytutefes.com/api/resources"));
+
+      if (res.statusCode == 200) {
+        resources = Resources.fromJson(json.decode(res.body));
+        setState(() {
+          _posts = resources!.data;
+          //lien = news!.links;
+          _isFistLoadRunning = false;
+        });
+        log("Post 1=3 ${_posts[0].name}");
+      }
+    } catch (err) {
+      log("message $err");
+      if (kDebugMode) {
+        print("Something went wrong");
+      }
+      _isFistLoadRunning = false;
     }
   }
 
@@ -60,7 +75,8 @@ class _ResourcePageState extends State<ResourcePage> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    getResources();
+    //getResources();
+    _publicationLoad();
     if (mounted) {
       setState(() {
       });
@@ -82,7 +98,7 @@ class _ResourcePageState extends State<ResourcePage> {
   Widget build(BuildContext context) {
     //print(urlAudio[0]['feed_url']);
     return Scaffold(
-      body: dataUrlResouces != null
+      body: _posts != null || _posts !=0
           ? CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(
@@ -92,7 +108,7 @@ class _ResourcePageState extends State<ResourcePage> {
                         CupertinoPageRoute(
                             fullscreenDialog: true,
                             builder: (context) {
-                              return ListeSearchCategories();
+                              return RecherchePage();
                             })),
                   ),
                 ),
@@ -100,6 +116,11 @@ class _ResourcePageState extends State<ResourcePage> {
                   child: TitrePage(
                     title: 'Les resources',
                     color: titreColor,
+                    onTap: (){
+                      Navigator.of(context).push(MaterialPageRoute(builder: (context){
+                        return PlusDeResourcesPage();
+                      }));
+                    },
                   ),
                 ),
                 SliverList(
@@ -109,11 +130,11 @@ class _ResourcePageState extends State<ResourcePage> {
                         onTap: () {
                           Navigator.of(context)
                               .push(MaterialPageRoute(builder: (context) {
-                            print(dataUrlResouces['data'][position]['image']);
+                            //print(dataUrlResouces['data'][position]['image']);
                             return ViewResourcePage(
-                              images: dataUrlResouces['data'][position]['image'],
-                              content: dataUrlResouces['data'][position]['description'],
-                              urlPdf: dataUrlResouces['data'][position]['file'],
+                              images: _posts[position].image,
+                              content: _posts[position].description,
+                              urlPdf: _posts[position].file,
                             );
                           }));
                         },
@@ -133,19 +154,14 @@ class _ResourcePageState extends State<ResourcePage> {
                             child: Row(
                               children: [
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(
+                                  padding:  EdgeInsets.symmetric(
                                       horizontal: 4.0),
                                   child: Container(
                                     width:
                                         MediaQuery.of(context).size.width * 0.3,
                                     height: 80,
                                     child: CachedNetworkImage(
-                                      imageUrl: dataUrlResouces == null ||
-                                              dataUrlResouces == 0
-                                          ? 0
-                                          : dataUrlResouces['data'][position]
-                                                  ['image'] ??
-                                              "",
+                                      imageUrl: _posts[position].image.toString(),
                                       fit: BoxFit.cover,
                                       placeholder: (context, url) =>
                                           Image.asset(
@@ -184,8 +200,7 @@ class _ResourcePageState extends State<ResourcePage> {
                                       children: [
                                         Container(
                                           child: Text(
-                                            dataUrlResouces['data'][position]
-                                                ['name'],
+                                            _posts[position].name,
                                             style: TextStyle(fontSize: 10),
                                             maxLines: 2,
                                           ),
@@ -195,7 +210,10 @@ class _ResourcePageState extends State<ResourcePage> {
                                           child: Container(
                                             alignment: Alignment.topLeft,
                                             child: Text(
-                                              '${dataUrlResouces['data'][position]['author'] == null ? '' : 'Auteur'}  :${dataUrlResouces['data'][position]['author'] != null ? dataUrlResouces['data'][position]['author'] : ''}',
+                                              /*'${dataUrlResouces['data'][position]['author'] == null ? '' : 'Auteur'}  :${dataUrlResouces['data'][position]['author'] != null ? dataUrlResouces['data'][position]['author'] : ''}'*/
+
+                                            '${_posts[position].author== null ? '' : 'Auteur'}  :${_posts[position].author != null ? _posts[position].author : ''}'
+                                              ,
                                               style: TextStyle(
                                                   fontSize: 10,
                                                   color: Colors.grey[600]),
@@ -213,9 +231,9 @@ class _ResourcePageState extends State<ResourcePage> {
                         ),
                       );
                     },
-                    childCount: dataUrlResouces == null || dataUrlResouces == 0
+                    childCount: _posts == null || _posts == 0
                         ? 0
-                        : dataUrlResouces['data'].length,
+                        : _posts.length,
                   ),
                 )
               ],
@@ -240,8 +258,7 @@ class ViewResourcePage extends StatefulWidget {
 
 class _ViewResourcePageState extends State<ViewResourcePage> {
   int progress = 0;
-  final ReceivePort _port = ReceivePort();
-  final mp3 = "https://seytutefes.com/uploads/resource_file__1683722151.pdf";
+
   var dio = Dio();
   String? downloadedFilePath;
   String? downloadingProgress;
@@ -283,6 +300,13 @@ class _ViewResourcePageState extends State<ViewResourcePage> {
     setState(() {
       pdfString= widget.urlPdf.substring(widget.urlPdf.length-3);
     });
+    if (mounted) {
+      setState(() {});
+    }
+  }
+  @override
+  void setState(fn) {
+    if (mounted) super.setState(fn);
   }
 
   @override
@@ -304,7 +328,7 @@ class _ViewResourcePageState extends State<ViewResourcePage> {
           style: TextStyle(color: Colors.black),
         ),
       ),
-      body: widget.dataUrlResouces==null? SingleChildScrollView(
+      body:  SingleChildScrollView(
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           child: Column(
@@ -361,18 +385,16 @@ class _ViewResourcePageState extends State<ViewResourcePage> {
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(SnackBar(
                                               content: Text(
-                                                  "le fichier sera telecharger dans le" +
-                                                      fullPath)));
+                                                  "le fichier sera telecharger dans le$fullPath")));
                                     } else {
                                       final tempDir =
-                                          await getTemporaryDirectory();
+                                          await getApplicationDocumentsDirectory();
                                       final downloadPath = '${tempDir.path}/${widget.urlPdf.replaceAll("https://seytutefes.com/uploads/", "")}';
                                       print('full path $downloadPath');
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(SnackBar(
                                         content: Text(
-                                            "le fichier sera telecharger dans le" +
-                                                downloadPath),
+                                            "le fichier sera telecharger dans le$downloadPath"),
 
                                       ));
 
@@ -461,6 +483,7 @@ class _ViewResourcePageState extends State<ViewResourcePage> {
               const SizedBox(
                 height: 15,
               ),
+
               HtmlWidget(
                 widget.content.toString().isEmpty?'':widget.content??"",
                 textStyle: const TextStyle(fontSize: 15),
@@ -469,7 +492,7 @@ class _ViewResourcePageState extends State<ViewResourcePage> {
             ],
           ),
         ),
-      ) : Center(child: CircularProgressIndicator(),),
+      ) ,
     );
   }
 }

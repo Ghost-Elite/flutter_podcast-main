@@ -1,11 +1,14 @@
 import 'dart:isolate';
+import 'dart:math';
 import 'dart:ui';
 import 'dart:io';
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:dio/dio.dart';
+import 'package:external_path/external_path.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'package:palette_generator/palette_generator.dart';
 import 'package:path_provider/path_provider.dart';
@@ -30,8 +33,7 @@ class _PlayerPageState extends State<PlayerPage> {
   bool isPlaying = true;
   int progress = 0;
   final ReceivePort _port = ReceivePort();
-  final mp3 =
-      "https://serveur01.ccngroupe.com/kabtv/audios/magal2022/1_Alamane.mp3";
+  String mp3='';
   var dio = Dio();
   String? downloadedFilePath;
   String? downloadingProgress;
@@ -65,14 +67,34 @@ class _PlayerPageState extends State<PlayerPage> {
       print((received / total * 100).toStringAsFixed(0) + "%");
     }
   }
+  Random random =  Random();
+  int index = 0;
+  List colors = [
+    Color(0xFF303D00),
+    Color(0xFF2C92F0),
+    Color(0xFFED3D05),
+    Color(0xFFFA7B06),
+    Color(0xFF16A925),
+    Color(0xFF3AAD7D),
+    Color(0xFF301D58),
+    Color(0xFFDF17CB),
+    Color(0xFF6D3986),
+   // Color(0xFF252525),
+    Color(0xFFA4C639),
+    Color(0xFF005062),
+  ];
 
   //List<Audio> songs = [];
+  void changeIndex() {
+    setState(() => index = random.nextInt(colors.length));
+  }
 
   @override
   void initState() {
     //print(player);
     //getAudio();
     openPlayer();
+    changeIndex();
     //_init();
     player.isPlaying.listen((event) {
       if (mounted) {
@@ -98,6 +120,9 @@ class _PlayerPageState extends State<PlayerPage> {
       }
     });
     checkNecessaryPermissions(context);
+    setState(() {
+      mp3=widget.idMusic.replaceAll("https://dev.acangroup.org/", "");
+    });
 
     //_downloadListener();
     super.initState();
@@ -108,7 +133,7 @@ class _PlayerPageState extends State<PlayerPage> {
       Audio.network(widget.idMusic,
           metas: Metas(
             title: widget.title,
-            artist: 'NF',
+            artist: '',
             //image:  MetasImage.network(widget.image),
           )),
       showNotification: true,
@@ -136,9 +161,10 @@ class _PlayerPageState extends State<PlayerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Color(0xff0280CA),
+        backgroundColor: colors[index],
         appBar: AppBar(
           elevation: 0,
+          centerTitle: true,
           backgroundColor: Colors.transparent,
           leading: Padding(
             padding: const EdgeInsets.only(left: 10),
@@ -161,21 +187,21 @@ class _PlayerPageState extends State<PlayerPage> {
                   size: 35,
                 ),
                 onPressed: () async {
-                  /*if (Platform.isAndroid) {
+                  if (Platform.isAndroid) {
                     String path =
-                        await ExtStorage.getExternalStoragePublicDirectory(
-                            ExtStorage.DIRECTORY_DOWNLOADS);
+                        await ExternalPath.getExternalStoragePublicDirectory(
+                            ExternalPath.DIRECTORY_DOWNLOADS);
                     //String fullPath = tempDir.path + "/boo2.pdf'";
-                    String fullPath = "$path/1_Alamane.mp3";
+                    String fullPath = "$path/${widget.idMusic.replaceAll("https://dev.acangroup.org/", "")}";
                     print('full path ${fullPath}');
 
-                    download2(dio, mp3, fullPath);
+                    download2(dio, widget.idMusic, fullPath);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                         content: Text(
                             "le fichier sera telecharger dans le" + fullPath)));
                   } else {
-                    final tempDir = await getTemporaryDirectory();
-                    final downloadPath = tempDir.path + '/downloaded.mp3';
+                    final tempDir = await getDownloadsDirectory();
+                    final downloadPath = tempDir!.path + '/${widget.idMusic.replaceAll("https://dev.acangroup.org/", "")}';
                     print('full path $downloadPath');
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                         content: Text("le fichier sera telecharger dans le" +
@@ -183,7 +209,7 @@ class _PlayerPageState extends State<PlayerPage> {
 
                     await downloadFileTo(
                         dio: dio,
-                        url: mp3,
+                        url: widget.idMusic,
                         savePath: downloadPath,
                         progressFunction: (received, total) {
                           if (total != -1) {
@@ -198,7 +224,7 @@ class _PlayerPageState extends State<PlayerPage> {
                       downloadingProgress = null;
                       downloadedFilePath = downloadPath;
                     });
-                  }*/
+                  }
                 },
               ),
             )
@@ -206,70 +232,73 @@ class _PlayerPageState extends State<PlayerPage> {
         ),
         //extendBodyBehindAppBar: true,
         body: Stack(
-          alignment: Alignment.center,
           children: [
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                      Colors.transparent,
-                      Colors.black.withOpacity(.7)
-                    ])),
-              ),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withOpacity(.7)
+                            ])),
+                  ),
+                ),
+
+              ],
             ),
-            NestedScrollView(
-              headerSliverBuilder:
-                  (BuildContext context, bool innerBoxIsScrolled) {
-                return [
-                  SliverToBoxAdapter(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        //setting the music cover
-                        const SizedBox(
-                          height: 15,
-                        ),
+            CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      //setting the music cover
+                      const SizedBox(
+                        height: 15,
+                      ),
 
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(9.0),
-                          child: Image.network(
-                            widget.image,
-                            width: MediaQuery.of(context).size.width * 0.90,
-                          ),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(9.0),
+                        child: Image.network(
+                          widget.image,
+                          width: MediaQuery.of(context).size.width * 0.90,
                         ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        Text(
-                          player.getCurrentAudioTitle,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 26,
-                              letterSpacing: 6),
-                        ),
-                        SizedBox(
-                          height: 5,
-                        ),
-                        Text(
-                          player.getCurrentAudioArtist,
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              letterSpacing: 6),
-                        ),
-                        SizedBox(
-                          height: 50.0,
-                        ),
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        player.getCurrentAudioTitle,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 26,
+                            letterSpacing: 6),
+                      ),
+                      SizedBox(
+                        height: 5,
+                      ),
+                      Text(
+                        player.getCurrentAudioArtist,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            letterSpacing: 6),
+                      ),
+                      SizedBox(
+                        height: 50.0,
+                      ),
 
-                        IntrinsicHeight(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              /*FutureBuilder<PaletteGenerator>(
+                      IntrinsicHeight(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            /*FutureBuilder<PaletteGenerator>(
                         future: getImageColors(player),
                         builder: (context, snapshot) {
                           return Container(
@@ -286,149 +315,165 @@ class _PlayerPageState extends State<PlayerPage> {
                           );
                         },
                       ),*/
-                              Container(
-                                width: MediaQuery.of(context).size.width * 0.99,
-                                child: Slider(
-                                    activeColor: Colors.grey,
-                                    thumbColor: Colors.green,
-                                    min: 0,
-                                    max: duration.inSeconds.toDouble(),
-                                    value: position.inSeconds.toDouble(),
-                                    onChanged: (value) async {
-                                      await player.seek(
-                                          Duration(seconds: value.toInt()));
-                                    }),
+                            Container(
+                              width: MediaQuery.of(context).size.width * 0.99,
+                              child: Slider(
+                                  activeColor: Colors.grey,
+                                  thumbColor: Colors.green,
+                                  min: 0,
+                                  max: duration.inSeconds.toDouble(),
+                                  value: position.inSeconds.toDouble(),
+                                  onChanged: (value) async {
+                                    await player.seek(
+                                        Duration(seconds: value.toInt()));
+                                  }),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 23.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    durationFormat(position),
+                                    style:
+                                    const TextStyle(color: Colors.grey),
+                                  ),
+                                  Text(
+                                    durationFormat(duration - position),
+                                    style:
+                                    const TextStyle(color: Colors.grey),
+                                  )
+                                ],
                               ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 23.0),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      durationFormat(position),
-                                      style:
-                                          const TextStyle(color: Colors.grey),
-                                    ),
-                                    Text(
-                                      durationFormat(duration - position),
-                                      style:
-                                          const TextStyle(color: Colors.grey),
-                                    )
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: EdgeInsets.only(right: 28, top: 15),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceAround,
-                                  children: [
-                                    IconButton(
-                                        onPressed: () async {
-                                          await player.previous();
-                                        },
-                                        icon: const Icon(
-                                          Icons.skip_previous_rounded,
-                                          size: 40,
-                                          color: Colors.grey,
-                                        )),
-                                    InkWell(
-                                      onTap: () async {
-                                        await player
-                                            .seekBy(Duration(seconds: -10));
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(top: 20),
-                                        child: Container(
-                                          width: 25,
-                                          height: 34,
-                                          decoration: const BoxDecoration(
-                                              image: DecorationImage(
-                                                  image: AssetImage(
-                                                      'assets/images/replay_moin.png'))),
-                                        ),
-                                      ),
-                                    ),
-                                    IconButton(
+                            ),
+                            Container(
+                              padding: EdgeInsets.only(right: 28, top: 15),
+                              child: Row(
+                                mainAxisAlignment:
+                                MainAxisAlignment.spaceAround,
+                                children: [
+                                  IconButton(
                                       onPressed: () async {
-                                        await player.playOrPause();
+                                        await player.previous();
                                       },
-                                      padding: EdgeInsets.zero,
-                                      icon: isPlaying
-                                          ? Icon(
-                                              Icons.pause_circle,
-                                              size: 70,
-                                              color: Colors.green[200],
-                                            )
-                                          : Icon(
-                                              Icons.play_circle,
-                                              size: 70,
-                                              color: Colors.green[200],
-                                            ),
-                                    ),
-                                    InkWell(
-                                      onTap: () async {
-                                        await player
-                                            .seekBy(Duration(seconds: 10));
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                            top: 20, left: 15),
-                                        child: Container(
-                                          width: 25,
-                                          height: 34,
-                                          decoration: const BoxDecoration(
-                                              image: DecorationImage(
-                                                  image: AssetImage(
-                                                      'assets/images/replay_plus.png'))),
-                                        ),
+                                      icon: const Icon(
+                                        Icons.skip_previous_rounded,
+                                        size: 40,
+                                        color: Colors.grey,
+                                      )),
+                                  InkWell(
+                                    onTap: () async {
+                                      await player
+                                          .seekBy(Duration(seconds: -10));
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 20),
+                                      child: Container(
+                                        width: 25,
+                                        height: 34,
+                                        decoration: const BoxDecoration(
+                                            image: DecorationImage(
+                                                image: AssetImage(
+                                                    'assets/images/replay_moin.png'))),
                                       ),
                                     ),
-                                    IconButton(
-                                        onPressed: () async {
-                                          await player.next();
-                                        },
-                                        icon: const Icon(
-                                          Icons.skip_next_rounded,
-                                          size: 40,
-                                          color: Colors.grey,
-                                        )),
-                                  ],
-                                ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () async {
+                                      await player.playOrPause();
+                                    },
+                                    padding: EdgeInsets.zero,
+                                    icon: isPlaying
+                                        ? Icon(
+                                      Icons.pause_circle,
+                                      size: 70,
+                                      color: Colors.green[200],
+                                    )
+                                        : Icon(
+                                      Icons.play_circle,
+                                      size: 70,
+                                      color: Colors.green[200],
+                                    ),
+                                  ),
+                                  InkWell(
+                                    onTap: () async {
+                                      await player
+                                          .seekBy(Duration(seconds: 10));
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 20, left: 15),
+                                      child: Container(
+                                        width: 25,
+                                        height: 34,
+                                        decoration: const BoxDecoration(
+                                            image: DecorationImage(
+                                                image: AssetImage(
+                                                    'assets/images/replay_plus.png'))),
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                      onPressed: () async {
+                                        await player.next();
+                                      },
+                                      icon: const Icon(
+                                        Icons.skip_next_rounded,
+                                        size: 40,
+                                        color: Colors.grey,
+                                      )),
+                                ],
                               ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10.0, vertical: 40),
-                                child: Container(
-                                  margin: EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
+                            ),
+                            /*Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10.0, vertical: 40),
+                              child: Container(
+                                margin: EdgeInsets.all(10),
+                                decoration: BoxDecoration(
                                     color: Colors.white
-                                  ),
-                                  child: HtmlWidget(
-                                    widget.content,
-                                    textStyle: TextStyle(fontSize: 18),
-                                    renderMode: RenderMode.column,
-                                  ),
+                                ),
+                                child: HtmlWidget(
+                                  widget.content,
+                                  textStyle: TextStyle(fontSize: 18),
+                                  renderMode: RenderMode.column,
                                 ),
                               ),
-                            ],
-                          ),
+                            ),*/
+                          ],
                         ),
-                      ],
-                    ),
-                  )
-                ];
-              },
-              body: Column(
-                children: const [
+                      ),
+                    ],
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: SizedBox(height: 50,),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    child: Container(
+                      width: MediaQuery.of(context).size.width,
+                      color: Colors.white,
 
-                ],
-              ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0,vertical: 10),
+                        child: HtmlWidget(
+                          widget.content,
+                          textStyle: TextStyle(fontSize: 16),
+                          renderMode: RenderMode.column,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              ],
             )
           ],
-        ));
+        )
+      );
   }
 }
 /*

@@ -22,28 +22,8 @@ class VideoplayerPage extends StatefulWidget {
 
 class _VideoplayerPageState extends State<VideoplayerPage> {
   YoutubePlayerController? _controller = YoutubePlayerController(initialVideoId: '');
-
-  bool _isPlayerReady = false;
-  youtubePayer() {
-    //videoID = widget.videoId;
-    //title = widget.title;
-    _controller = YoutubePlayerController(
-      initialVideoId: "scsexlO1ezo",
-      flags: const YoutubePlayerFlags(
-        mute: false,
-        autoPlay: true,
-        disableDragSeek: false,
-        loop: false,
-        isLive: false,
-        forceHD: false,
-        enableCaption: true,
-      ),
-    )..addListener(listener);
-  }
   int progress = 0;
-  final ReceivePort _port = ReceivePort();
-  final mp3 =
-      "https://seytutefes.com/uploads/resource_file__1683722151.pdf";
+
   var dio = Dio();
   String? downloadedFilePath;
   String? downloadingProgress;
@@ -77,11 +57,42 @@ class _VideoplayerPageState extends State<VideoplayerPage> {
       print((received / total * 100).toStringAsFixed(0) + "%");
     }
   }
+  var pdfString ;
+
+  bool _isPlayerReady = false;
+  youtubePayer() {
+    //videoID = widget.videoId;
+    //title = widget.title;
+    _controller = YoutubePlayerController(
+      initialVideoId: widget.videoId,
+      flags: const YoutubePlayerFlags(
+        mute: false,
+        autoPlay: true,
+        disableDragSeek: false,
+        loop: false,
+        isLive: false,
+        forceHD: false,
+        enableCaption: true,
+      ),
+    )..addListener(listener);
+  }
+  void TestString(){
+    if (widget.filleExite == null) {
+
+    } else{
+      setState(() {
+        pdfString= widget.filleExite.substring(widget.filleExite.length-3);
+      });
+    }
+
+  }
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     youtubePayer();
+    TestString();
+
   }
   void listener() {
     if (_isPlayerReady && mounted && !_controller!.value.isFullScreen) {
@@ -114,9 +125,9 @@ class _VideoplayerPageState extends State<VideoplayerPage> {
   @override
   Widget build(BuildContext context) {
     if (downloadingProgress ==100) {
-      print(mp3.replaceAll("https://seytutefes.com/uploads/", ""));
+      print(widget.filleExite.replaceAll("https://seytutefes.com/uploads/", ""));
     }
-    //print(mp3.replaceAll("https://seytutefes.com/uploads/", ""));
+    print(widget.videoId);
     return YoutubePlayerBuilder(
       player: YoutubePlayer(
         controller: _controller!,
@@ -150,67 +161,92 @@ class _VideoplayerPageState extends State<VideoplayerPage> {
                         SizedBox(height: 10,),
                         Row(
                           children: [
-                            widget.filleExite==null
-                                ? InkWell(
-                                onTap: () async {
-                                  if (Platform.isAndroid) {
-                                    String
-                                    path = await ExternalPath.getExternalStoragePublicDirectory(
-                                        ExternalPath.DIRECTORY_DOWNLOADS);
-                                    //String fullPath = tempDir.path + "/boo2.pdf'";
-                                    String fullPath = "$path/${mp3.replaceAll("https://seytutefes.com/uploads/", "")}";
-                                    print('full path ${fullPath}');
-
-                                    download2(dio, mp3, fullPath);
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("le fichier sera telecharger dans le"+ fullPath)));
-                                  }  else{
-                                    final tempDir = await getTemporaryDirectory();
-                                    final downloadPath = tempDir.path + '/${mp3.replaceAll("https://seytutefes.com/uploads/", "")}';
-                                    print('full path $downloadPath');
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("le fichier sera telecharger dans le"+ downloadPath),duration: Duration(seconds: 200),));
-
-                                    await downloadFileTo(
-                                    dio: dio,
-                                    url: mp3,
-                                    savePath: downloadPath,
-                                    progressFunction: (received, total) {
-                                      if (total != -1) {
-                                        setState(() {
-                                          downloadingProgress = (received / total * 100).toStringAsFixed(0) + '%';
-                                        });
-                                      }
-                                    });
-                                    setState(() {
-                                      downloadingProgress = null;
-                                      downloadedFilePath = downloadPath;
-                                    });
-
-                                  }
-
-                                },
-                                  child: Container(
-                                  height: 40,
-                                  color: Colors.blue,
-                                  alignment: Alignment.center,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text("PAS DE DOCUMENT DISPONIBLE",style: TextStyle(color: Colors.white,fontSize: 13),),
-                                  )
-                            ),
-                                )
-                                : Container(
+                            widget.filleExite == null
+                                ? Container(
                                 height: 40,
                                 color: Colors.blue,
                                 alignment: Alignment.center,
-                                child: Row(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text("DOCUMENT DISPONIBLE",style: TextStyle(color: Colors.white,fontSize: 13),),
-                                    ),
-                                    Icon(Remix.download_2_fill,color: Colors.white,),
-                                  ],
-                                )
+                                child: const Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Text(
+                                    "PAS DE DOCUMENT DISPONIBLE",
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 13),
+                                  ),
+                                ))
+                                : InkWell(
+                              onTap: () async {
+                                if (Platform.isAndroid) {
+                                  String path = await ExternalPath
+                                      .getExternalStoragePublicDirectory(
+                                      ExternalPath.DIRECTORY_DOWNLOADS);
+                                  //String fullPath = tempDir.path + "/boo2.pdf'";
+                                  String fullPath =
+                                      "$path/${widget.filleExite.replaceAll("https://seytutefes.com/uploads/", "")}";
+                                  print('full path ${fullPath}');
+
+                                  download2(dio, widget.filleExite, fullPath);
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(SnackBar(
+                                      content: Text(
+                                          "le fichier sera telecharger dans le" +
+                                              fullPath)));
+                                } else {
+                                  final tempDir =
+                                  await getTemporaryDirectory();
+                                  final downloadPath = '${tempDir.path}/${widget.filleExite.replaceAll("https://seytutefes.com/uploads/", "")}';
+                                  print('full path $downloadPath');
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(SnackBar(
+                                    content: Text(
+                                        "le fichier sera telecharger dans le" +
+                                            downloadPath),
+
+                                  ));
+
+                                  await downloadFileTo(
+                                      dio: dio,
+                                      url: widget.filleExite,
+                                      savePath: downloadPath,
+                                      progressFunction: (received, total) {
+                                        if (total != -1) {
+                                          setState(() {
+                                            downloadingProgress =
+                                                (received / total * 100)
+                                                    .toStringAsFixed(
+                                                    0) +
+                                                    '%';
+                                          });
+                                        }
+                                      });
+                                  setState(() {
+                                    downloadingProgress = null;
+                                    downloadedFilePath = downloadPath;
+                                  });
+                                }
+                              },
+                              child: Container(
+                                  height: 40,
+                                  color: Colors.blue,
+                                  alignment: Alignment.center,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children:  [
+                                      Icon(Icons.picture_as_pdf_sharp,color: Colors.white,),
+                                      Padding(
+                                        padding: EdgeInsets.all(8.0),
+                                        child: Text("DOWNLOAD ${pdfString =="pdf"?'.PDF':'.DOCX '}",
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12),
+                                        ),
+                                      ),
+                                      Icon(
+                                        Remix.download_2_fill,
+                                        color: Colors.white,
+                                      ),
+                                    ],
+                                  )),
                             )
                           ],
                         ),

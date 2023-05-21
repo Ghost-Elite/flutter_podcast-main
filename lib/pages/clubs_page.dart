@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flutter/cupertino.dart';
@@ -7,17 +8,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_podcast/pages/export_page.dart';
 import 'package:flutter_podcast/widgets/export_widgets.dart';
 import 'package:flutter_podcast/utils/utils_export.dart';
+import 'package:logger/logger.dart';
+import 'package:flutter_podcast/models/export_model.dart';
 class ClubsPage extends StatefulWidget {
   final AssetsAudioPlayer player;
-  var dataUrlClub;
-  ClubsPage({Key? key,required this.player,this.dataUrlClub}) : super(key: key);
+  Club? club;
+  List<DataClub> clubdata = [];
+  bool isLoading;
+  About? about;
+  ClubsPage({Key? key,required this.player,this.club,required this.clubdata,required this.isLoading,this.about}) : super(key: key);
 
   @override
   State<ClubsPage> createState() => _ClubsPageState();
 }
 
 class _ClubsPageState extends State<ClubsPage> {
-  TextEditingController searchController = TextEditingController();
+  //TextEditingController searchController = TextEditingController();
   List colors=[
     Color(0xFF303D00),
     Color(0xFF2C92F0),
@@ -49,6 +55,7 @@ class _ClubsPageState extends State<ClubsPage> {
 
   ];
 
+
   @override
   void initState() {
     // TODO: implement initState
@@ -68,9 +75,10 @@ class _ClubsPageState extends State<ClubsPage> {
   }
   @override
   Widget build(BuildContext context) {
-    //print(urlAudio[0]['feed_url']);
+    print(widget.clubdata[0].image);
     return Scaffold(
-      body: NestedScrollView(
+      body: widget.clubdata !=null
+          ? NestedScrollView(
         headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
           return [
             /*SliverToBoxAdapter(
@@ -90,13 +98,13 @@ class _ClubsPageState extends State<ClubsPage> {
                 onTap: ()=>Navigator.push(context, CupertinoPageRoute(
                     fullscreenDialog: true,
                     builder: (context){
-                      return ListeSearchCategories();
+                      return RecherchePage();
                     })),
               ),
             ),
             SliverToBoxAdapter(
               child: TitrePage(
-                title: 'Toutes les catégories',
+                title: 'Clubs',
                 color: titreColor,
               ),
             ),
@@ -113,7 +121,8 @@ class _ClubsPageState extends State<ClubsPage> {
 
           ],
         ),
-      ),
+      )
+          : Center(child: CircularProgressIndicator(),),
     );
   }
   Widget gridviewCategories(){
@@ -127,24 +136,26 @@ class _ClubsPageState extends State<ClubsPage> {
               crossAxisSpacing: 20,
               mainAxisSpacing: 20
           ),
-          itemCount: widget.dataUrlClub['data'] ==null ||widget.dataUrlClub['data']==0?0: widget.dataUrlClub['data'].length,
+          itemCount: widget.clubdata ==null ||widget.clubdata==0?0: widget.clubdata.length,
           itemBuilder: (BuildContext ctx, index) {
             //print( widget.dataUrlClub['data'].length);
             return InkWell(
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(builder: (context){
                   return DetailsPublicationClubPage(
-                    titrePublic: widget.dataUrlClub['data'][index]['name'],
-                    pubUrl: widget.dataUrlClub['data'][index]['publication_url'],
-                    imageUrl: widget.dataUrlClub['data'][index]['image'].toString().trim(),
-                    content: widget.dataUrlClub['data'][index]['description'],
+                    titrePublic: widget.clubdata[index].name,
+                    pubUrl: widget.clubdata[index].publicationUrl,
+                    imageUrl: widget.clubdata[index].image.toString().trim(),
+                    content: widget.clubdata[index].description,
+                    about: widget.about,
+                    //type: widget.dataUrlClub['data'][index]['description'],
                   );
                 }));
               },
               child: CategoryCard(
-                imageUrl: widget.dataUrlClub['data'][index]['image'].toString().trim(),
+                imageUrl: widget.clubdata[index].image.toString().trim(),
                 //color: Colors.white,
-                title: widget.dataUrlClub['data'][index]['name'],
+                title: widget.clubdata[index].name,
               ),
             );
           })

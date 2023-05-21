@@ -18,6 +18,7 @@ class CardAlaunePodcasts extends StatelessWidget {
       this.isActive})
       : super(key: key);
 
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -53,28 +54,31 @@ class CardAlaunePodcasts extends StatelessWidget {
             SizedBox(
               height: 6,
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 17.0),
-                  child: Text(Jiffy.parse(date!, pattern: "yyyy-MM-ddTHH")
-                      .format(pattern: "dd-MM-yyyy")),
-                ),
-                isActive != null
-                    ? Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                            color: Colors.green[100],
-                            borderRadius: BorderRadius.circular(20)),
-                        child: Icon(
-                          Icons.play_arrow,
-                          color: Colors.green,
-                        ),
-                      )
-                    : Container()
-              ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  /*Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 17.0),
+                    child: Text(Jiffy.parse(date!, pattern: "yyyy-MM-ddTHH")
+                        .format(pattern: "dd-MM-yyyy")),
+                  ),*/
+                  isActive != null
+                      ? Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                              color: Colors.green[100],
+                              borderRadius: BorderRadius.circular(20)),
+                          child: Icon(
+                            Icons.play_arrow,
+                            color: Colors.green,
+                          ),
+                        )
+                      : Container()
+                ],
+              ),
             )
           ],
         ),

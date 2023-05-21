@@ -1,20 +1,21 @@
-import 'dart:convert';
-
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_podcast/pages/export_page.dart';
-import 'package:palette_generator/palette_generator.dart';
 import 'package:flutter_podcast/widgets/export_widgets.dart';
 import 'package:flutter_podcast/utils/colors.dart';
-import 'package:http/http.dart' as http;
-
+import 'package:flutter_podcast/models/export_model.dart';
 import '../utils/utils_export.dart';
+
 class PublicationsPage extends StatefulWidget {
   AssetsAudioPlayer player = AssetsAudioPlayer();
   bool? isPlaying = true;
-  var dataUrlPublication,dataUrlClub;
-  PublicationsPage({Key? key,required this.player,this.isPlaying,this.dataUrlPublication,this.dataUrlClub}) : super(key: key);
+  News? news;
+  List<Data> posts = [];
+  bool? isFistLoadRunning = false;
+  Club? club;
+  List<DataClub> clubdata = [];
+  PublicationsPage({Key? key,required this.player,this.isPlaying,this.news,this.isFistLoadRunning,required this.posts,required this.clubdata,this.club}) : super(key: key);
 
   @override
   State<PublicationsPage> createState() => _PublicationsPageState();
@@ -22,36 +23,6 @@ class PublicationsPage extends StatefulWidget {
 
 class _PublicationsPageState extends State<PublicationsPage> {
   TextEditingController searchController = TextEditingController();
-  List colors=[
-    Color(0xFF303D00),
-    Color(0xFF2C92F0),
-    Color(0xFFED3D05),
-    Color(0xFFFA7B06),
-    /*Color(0xFF16A925),
-    Color(0xFF3AAD7D),
-    Color(0xFF301D58),
-    Color(0xFFDF17CB),
-    Color(0xFF6D3986),
-    Color(0xFF252525),
-    Color(0xFFA4C639),
-    Color(0xFF005062),*/
-  ];
-  List titre=[
-    'Nouveaux podcasts',
-    'Actualités',
-    'Nouveaux podcasts',
-    'Actualités',
-    /*'Nouveaux podcasts',
-    'Actualités',
-    'Actualités',
-    'Music',
-    'Radios',
-    'Track',
-    'Actualités',
-    'podcasts'*/
-
-  ];
-
 
 
   @override
@@ -63,6 +34,7 @@ class _PublicationsPageState extends State<PublicationsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: backgroundColor,
       body: NestedScrollView(
         headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
           return [
@@ -72,7 +44,9 @@ class _PublicationsPageState extends State<PublicationsPage> {
                 onTap: ()=>Navigator.push(context, CupertinoPageRoute(
                     fullscreenDialog: true,
                     builder: (context){
-                      return ListeSearchCategories();
+                      return RecherchePage(
+
+                      );
                     })),
               ),
             ),
@@ -80,51 +54,19 @@ class _PublicationsPageState extends State<PublicationsPage> {
               child: TitrePage(
                 title: 'Publications',
                 color: titreColor,
+                onTap: (){
+                  Navigator.of(context).push(MaterialPageRoute(builder: (context){
+                    return const PlusDePublicationPage();
+                  }));
+                },
               ),
             ),
             SliverToBoxAdapter(
-              child: widget.dataUrlPublication !=null|| widget.dataUrlPublication!=0
+              child: widget.isFistLoadRunning !=null
                   ?cardPodcast()
-                  :Center(child: CircularProgressIndicator()),
+                  :const Center(child: CircularProgressIndicator()),
             ),
-            SliverToBoxAdapter(
-              child: TitrePage(
-                title: 'Mes podcasts',
-                color: titreColor,
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Container(
-                height: 140,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: songs.length,
-                  itemBuilder: (context, index) {
-                    return InkWell(
-                      onTap: () async {
-                        await widget.player.playlistPlayAtIndex(index);
-                        setState(() {
-                          widget.player.getCurrentAudioImage;
-                          widget.player.getCurrentAudioTitle;
-                        });
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 15.0, vertical: 10),
-                        child: Container(
-                          width: 120,
-                          height: 130,
-                          child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child:
-                              Image.asset(songs[index].metas.image!.path)),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
+
             SliverToBoxAdapter(
               child: TitrePage(
                 title: 'Clubs',
@@ -151,49 +93,51 @@ class _PublicationsPageState extends State<PublicationsPage> {
   Widget cardPodcast(){
     return Container(
       height: 280,
-      padding: EdgeInsets.symmetric(horizontal: 10,vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10,vertical: 10),
       child: ListView.builder(
           scrollDirection: Axis.horizontal,
-          itemCount: widget.dataUrlPublication ==null || widget.dataUrlPublication ==0 ?0: widget.dataUrlPublication['data'].length,
+          itemCount: widget.posts ==null || widget.posts ==0 ?0: widget.posts.length,
           itemBuilder: (context,position){
         return CardAlaunePodcasts(
           onTap: (){
-            if (widget.dataUrlPublication['data'][position]['podcast'] ==null) {
+            if (widget.posts[position].podcast ==null) {
               Navigator.of(context).push(
                   MaterialPageRoute(builder: (context){
                     //print(widget.dataUrlPublication['data'][position]['content']);
                     return DetailsPublicationPage(
-                      pubUrl: widget.dataUrlPublication['data'][position]['content'],
-                      imageUrl: widget.dataUrlPublication['data'][position]['image'],
-                      title: widget.dataUrlPublication['data'][position]['title'],
-                      date: widget.dataUrlPublication['data'][position]['created_at'],
+                      pubUrl: widget.posts[position].content,
+                      imageUrl: widget.posts[position].image,
+                      title: widget.posts[position].title,
+                      date: widget.posts[position].createdAt,
                     );
                   }));
-            }else if(widget.dataUrlPublication['data'][position]['type_url'] =='audio'){
+            }else if(widget.posts[position].typeUrl =='audio'){
               Navigator.of(context).push(
                   MaterialPageRoute(builder: (context){
-                    print(widget.dataUrlPublication['data'][position]['content']);
+                    print(widget.posts[position].content);
                     return PlayerPage(
-                      image: widget.dataUrlPublication['data'][position]['image'],
-                      idMusic: widget.dataUrlPublication['data'][position]['podcast'],
-                      title: widget.dataUrlPublication['data'][position]['title'],
-                      content: widget.dataUrlPublication['data'][position]['content'],
+                      image: widget.posts[position].image,
+                      idMusic: widget.posts[position].podcast,
+                      title: widget.posts[position].title,
+                      content: widget.posts[position].content,
 
                     );
                   }));
-            }else if(widget.dataUrlPublication['data'][position]['type_url'] =='soundcloud'){
+            }else if(widget.posts[position].typeUrl =='soundcloud'){
               Navigator.of(context).push(MaterialPageRoute(builder: (context){
                 return PlayerTypePage(
-                  idMusic: widget.dataUrlPublication['data'][position]['podcast'],
+                  idMusic: widget.posts[position].podcast,
+                  content: widget.posts[position].content,
+
                 );
               }));
             }
 
           },
-          title: widget.dataUrlPublication['data'][position]['title'],
-          date: widget.dataUrlPublication['data'][position]['created_at'],
-          imageUrl:  widget.dataUrlPublication['data'][position]['image'],
-          isActive: widget.dataUrlPublication['data'][position]['podcast'],
+          title: widget.posts[position].title,
+          date: '',
+          imageUrl:  widget.posts[position].image,
+          isActive: widget.posts[position].podcast,
         );
       }),
     );
@@ -209,24 +153,24 @@ class _PublicationsPageState extends State<PublicationsPage> {
               crossAxisSpacing: 20,
               mainAxisSpacing: 20
           ),
-          itemCount: widget.dataUrlClub ==null ||widget.dataUrlClub==0?0: widget.dataUrlClub['data'].length,
+          itemCount: widget.clubdata==null ||widget.clubdata==0?0: widget.clubdata.length,
           itemBuilder: (BuildContext ctx, index) {
          // print( widget.dataUrlClub['data'].length);
             return InkWell(
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(builder: (context){
                   return DetailsPublicationClubPage(
-                    titrePublic: widget.dataUrlClub['data'][index]['name'],
-                    pubUrl: widget.dataUrlClub['data'][index]['publication_url'],
-                    imageUrl: widget.dataUrlClub['data'][index]['image'].toString().trim(),
-                    content: widget.dataUrlClub['data'][index]['description'],
+                    titrePublic: widget.clubdata[index].name,
+                    pubUrl: widget.clubdata[index].publicationUrl,
+                    imageUrl: widget.clubdata[index].image.toString().trim(),
+                    content: widget.clubdata[index].description,
                   );
                 }));
               },
               child: CategoryCard(
-                imageUrl: widget.dataUrlClub['data'][index]['image'].toString().trim(),
+                imageUrl: widget.clubdata[index].image.toString().trim(),
                 //color: Colors.white,
-                title: widget.dataUrlClub['data'][index]['name'],
+                title: widget.clubdata[index].name,
               ),
             );
           })

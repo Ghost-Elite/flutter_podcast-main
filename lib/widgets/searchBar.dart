@@ -11,7 +11,7 @@ class SearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return  Padding(
-      padding: EdgeInsets.symmetric(horizontal: 10,vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 15,vertical: 10),
       child: TextField(
         onTap: onTap,
         cursorColor: Colors.white,
@@ -34,7 +34,7 @@ class SearchBar extends StatelessWidget {
               icon: Icon(Icons.filter_list,color: Colors.grey,),
               onPressed: onPressed,
             ),
-            hintText: 'Que souhaitez-vous écouter ?',
+            hintText: 'Recherche par club',
             hintStyle: TextStyle(color: Colors.black,fontSize: 14),
             prefixIconColor: Colors.black),
       ),

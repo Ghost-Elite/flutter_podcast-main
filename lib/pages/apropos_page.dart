@@ -6,45 +6,46 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:flutter_podcast/utils/utils_export.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_podcast/models/export_model.dart';
 
 class AproposPage extends StatefulWidget {
-  var dataUrlAbout,nameAbout,email,tel,image,about_lmt;
-  AproposPage({Key? key}) : super(key: key);
+  About? about;
+  bool? isFistLoadRunning = false;
+  AproposPage({Key? key,this.about,this.isFistLoadRunning}) : super(key: key);
 
   @override
   State<AproposPage> createState() => _AproposPageState();
 }
 
 class _AproposPageState extends State<AproposPage> {
-  var dataUrlAbout;
-  Future<void> getPApropos() async {
-    try {
-      String endpoint="about";
-      var url = "${baseUrl+endpoint}";
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        var data = jsonDecode(response.body);
-        setState(() {
-          dataUrlAbout=data;
-        });
-        //print(dataMocs['data']['name']);
-      }
-    } on Exception catch (e) {
-      print(e.toString());
-    }
-  }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    getPApropos();
+
+    if (this.mounted) {
+      setState(() {
+        // Your state change code goes here
+      });
+    }
+  }
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+  }
+  @override
+  void setState(fn) {
+    if (mounted) super.setState(fn);
   }
   @override
   Widget build(BuildContext context) {
-   // print(widget.nameAbout['data']);
+   print(widget.about!.data.email);
     return Scaffold(
       body: SafeArea(
-        child: dataUrlAbout !=null
+        child: widget.about !=false
             ? SingleChildScrollView(
           child: Column(
 
@@ -61,7 +62,7 @@ class _AproposPageState extends State<AproposPage> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(60),
                     child: CachedNetworkImage(
-                      imageUrl: dataUrlAbout['data']['image'] != null && dataUrlAbout['data']['image'].toString().isNotEmpty?dataUrlAbout['data']['image'] :"",
+                      imageUrl: widget.about!.data.image != null && widget.about!.data.image.toString().isNotEmpty?widget.about!.data.image  :"",
                       fit: BoxFit.cover,
                       placeholder: (context, url) =>
                           Image.asset(
@@ -102,59 +103,68 @@ class _AproposPageState extends State<AproposPage> {
                   color: Colors.teal.shade100,
                 ),
               ),
-              Card(
-                margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 25.0),
-                child: ListTile(
-                  leading: Icon(
-                    Icons.phone,
-                    color: Colors.black,
-                  ),
-                  title: Text(
-                    dataUrlAbout['data']['phone'] != null && dataUrlAbout['data']['phone'].toString().isNotEmpty ? dataUrlAbout['data']['phone'] : '',
-                    style: TextStyle(
-                        fontSize: 20.0,
-                        color: Colors.black54),
+              InkWell(
+                onTap: ()=>_makePhoneCall(),
+                child: Card(
+                  margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 25.0),
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.phone,
+                      color: Colors.black,
+                    ),
+                    title: Text(
+                        widget.about!.data.phone != null && widget.about!.data.phone.toString().isNotEmpty ? widget.about!.data.phone : '',
+                      style: TextStyle(
+                          fontSize: 20.0,
+                          color: Colors.black54),
+                    ),
                   ),
                 ),
               ),
-              Card(
-                margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 25.0),
-                child: ListTile(
-                  leading: Icon(
-                    Icons.email,
-                    color: Colors.black,
-                  ),
-                  title: Text(
-                    dataUrlAbout['data']['email'] != null && dataUrlAbout['data']['email'].toString().isNotEmpty ? dataUrlAbout['data']['email'] : '',
-                    style: TextStyle(
+              InkWell(
+                onTap: ()=>_sendEmail(),
+                child: Card(
+                  margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 25.0),
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.email,
+                      color: Colors.black,
+                    ),
+                    title: Text(
+                      widget.about!.data.email != null && widget.about!.data.email.toString().isNotEmpty ? widget.about!.data.email : '',
+                      style: TextStyle(
 
-                        fontSize: 20.0,
-                        color: Colors.black54),
+                          fontSize: 20.0,
+                          color: Colors.black54),
+                    ),
                   ),
                 ),
               ),
-              Card(
-                margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 25.0),
-                child: ListTile(
-                  leading: Icon(
-                    Icons.home_filled,
-                    color: Colors.black,
-                  ),
-                  title: Text(
-                    dataUrlAbout['data']['address'] != null && dataUrlAbout['data']['address'].toString().isNotEmpty ? dataUrlAbout['data']['address'] : '',
-                    style: TextStyle(
-                        fontSize: 20.0,
-                        color: Colors.black54),
+              InkWell(
+
+                child: Card(
+                  margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 25.0),
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.home_filled,
+                      color: Colors.black,
+                    ),
+                    title: Text(
+                      widget.about!.data.address != null && widget.about!.data.address.toString().isNotEmpty ? widget.about!.data.address : '',
+                      style: TextStyle(
+                          fontSize: 20.0,
+                          color: Colors.black54),
+                    ),
                   ),
                 ),
               ),
               SizedBox(height: 10,),
-              dataUrlAbout['data']['privacy'] != null?
+              widget.about!.data.aboutLmt != null?
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: HtmlWidget(
-                    dataUrlAbout['data']['privacy'] != null && dataUrlAbout['data']['privacy'].toString().isNotEmpty ? dataUrlAbout['data']['privacy'] : '',
+                    widget.about!.data.aboutLmt != null &&  widget.about!.data.aboutLmt.toString().isNotEmpty ?  widget.about!.data.aboutLmt : '',
                     textStyle: TextStyle(fontSize: 15,letterSpacing: 2.0),
 
                     renderMode: RenderMode.column,
@@ -169,4 +179,32 @@ class _AproposPageState extends State<AproposPage> {
       ),
     );
   }
+  void _launchPhone() async =>
+      await canLaunch( widget.about!.data.phone != null && widget.about!.data.phone.toString().isNotEmpty ? widget.about!.data.phone : '')
+          ? await launch(widget.about!.data.phone != null && widget.about!.data.phone.toString().isNotEmpty ? widget.about!.data.phone : '')
+          : throw 'Could not launch ${widget.about!.data.phone != null && widget.about!.data.phone.toString().isNotEmpty ? widget.about!.data.phone : ''}';
+  void _launchEmail() async =>
+      await canLaunch(widget.about!.data.email != null && widget.about!.data.email.toString().isNotEmpty ? widget.about!.data.email : '')
+          ? await launch(widget.about!.data.email != null && widget.about!.data.email.toString().isNotEmpty ? widget.about!.data.email : '')
+          : throw 'Could not launch ${widget.about!.data.email != null && widget.about!.data.email.toString().isNotEmpty ? widget.about!.data.email : ''}';
+
+  Future<void> _makePhoneCall() async {
+    final Uri launchUri = Uri(
+      scheme: 'tel',
+      path: widget.about!.data.phone,
+    );
+    await launchUrl(launchUri);
+  }
+  void _sendEmail(){
+    final Uri emailLaunchUri = Uri(
+      scheme: 'mailto',
+      path: widget.about!.data.email,
+      queryParameters: {
+        'subject': 'CallOut user Profile',
+        'body': widget.about!.data.email
+      },
+    );
+    launchUrl(emailLaunchUri);
+  }
+
 }

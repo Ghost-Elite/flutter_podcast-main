@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 class CategoryCard extends StatelessWidget {
@@ -24,6 +25,28 @@ class CategoryCard extends StatelessWidget {
                 image: NetworkImage(imageUrl),
                 fit: BoxFit.cover
               )
+            ),
+            child: CachedNetworkImage(
+              imageUrl: imageUrl,
+              fit: BoxFit.cover,
+              placeholder: (context, url) =>
+                  Image.asset(
+                    "assets/images/logo.png",
+                    width:
+                    MediaQuery.of(context).size.width,
+                    height: 130,
+                    fit: BoxFit.cover,
+                  ),
+              errorWidget: (context, url, error) =>
+                  Image.asset(
+                    "assets/images/logo.png",
+                    width:
+                    MediaQuery.of(context).size.width ,
+                    height: 130,
+                    fit: BoxFit.cover,
+                  ),
+              width: MediaQuery.of(context).size.width,
+              height: 130,
             ),
           ),
           Container(

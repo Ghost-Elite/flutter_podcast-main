@@ -1,29 +1,38 @@
 import 'dart:convert';
-import 'dart:math' as math;
+import 'dart:developer';
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:http/http.dart' as http;
-import 'package:palette_generator/palette_generator.dart';
+import 'package:remixicon/remixicon.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'export_page.dart';
 import 'package:flutter_podcast/utils/utils_export.dart';
+import 'package:flutter_podcast/models/export_model.dart';
+
 class HomePage extends StatefulWidget {
   static int idpage = 0;
+
   const HomePage({Key? key}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage>  with SingleTickerProviderStateMixin,AutomaticKeepAliveClientMixin<HomePage>{
+class _HomePageState extends State<HomePage>
+    with
+        SingleTickerProviderStateMixin,
+        AutomaticKeepAliveClientMixin<HomePage> {
   final player = AssetsAudioPlayer();
   bool isPlaying = true;
   int _page = 0;
   String title = "Podcasts";
   TextEditingController searchController = TextEditingController();
   late final AnimationController _animationController =
-  AnimationController(vsync: this, duration: const Duration(seconds: 3));
+      AnimationController(vsync: this, duration: const Duration(seconds: 3));
+
   @override
   // TODO: implement wantKeepAlive
   bool get wantKeepAlive => true;
@@ -33,16 +42,23 @@ class _HomePageState extends State<HomePage>  with SingleTickerProviderStateMixi
     keepPage: true,
   );
 
-  var dataUrlClub;
-  var dataUrlPublication;
-  var dataMocs;
-  var dataUrlAbout;
-  var dataUrlResouces;
+  About? about;
+  bool _isFistLoadRunning = false;
+  bool _LoadRunning = false;
+  final _baseUrl = "seytutefes.com";
+  List<Data> _posts = [];
+  List<DataClub> _clubdata = [];
+  List<DataMocs> _datamocs = [];
+  Mocs? mocs;
+  News? news;
+  Club? club;
+  List<Link> lien = [];
+  late bool _isLoading;
 
-  Future<void> getClubs() async {
+  /*Future<void> getClubs() async {
     try {
       String endpoint="clubs";
-      var url = "${baseUrl+endpoint}";
+      var url = "${baseUrls+endpoint}";
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
@@ -58,7 +74,7 @@ class _HomePageState extends State<HomePage>  with SingleTickerProviderStateMixi
   Future<void> getPublication() async {
     try {
       String endpoint="publications";
-      var url = "${baseUrl+endpoint}";
+      var url = "${baseUrls+endpoint}";
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
@@ -74,7 +90,7 @@ class _HomePageState extends State<HomePage>  with SingleTickerProviderStateMixi
   Future<void> getPApropos() async {
     try {
       String endpoint="about";
-      var url = "${baseUrl+endpoint}";
+      var url = "${baseUrls+endpoint}";
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
@@ -90,7 +106,7 @@ class _HomePageState extends State<HomePage>  with SingleTickerProviderStateMixi
   Future<void> getMocs() async {
     try {
       String endpoint="moocs";
-      var url = "${baseUrl+endpoint}";
+      var url = "${baseUrls+endpoint}";
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
@@ -102,7 +118,97 @@ class _HomePageState extends State<HomePage>  with SingleTickerProviderStateMixi
     } on Exception catch (e) {
       print(e.toString());
     }
+  }*/
+  void _aboutLoad() async {
+    try {
+      final url = Uri.https(baseUrls, "api/about");
+      final res = await http.get(url);
+
+      if (res.statusCode == 200) {
+        about = About.fromJson(json.decode(res.body));
+        setState(() {
+          _LoadRunning = false;
+        });
+        //log("Post 1 ${about!.data.name}");
+      }
+    } catch (err) {
+      log("message $err");
+      if (kDebugMode) {
+        print("Something went wrong");
+      }
+      _LoadRunning = true;
+    }
   }
+
+  void _publicationLoad() async {
+    try {
+      final url = Uri.https(baseUrls, "api/publications");
+      final res = await http.get(url);
+
+      if (res.statusCode == 200) {
+        news = News.fromJson(json.decode(res.body));
+        setState(() {
+          _posts = news!.data;
+          lien = news!.links;
+          _isFistLoadRunning = false;
+        });
+        //log("Post 1 ${_posts}");
+      }
+    } catch (err) {
+      log("message $err");
+      if (kDebugMode) {
+        print("Something went wrong");
+      }
+      _isFistLoadRunning = false;
+    }
+  }
+
+  void _clubLoad() async {
+    try {
+      final url = Uri.https(baseUrls, "api/clubs");
+      final res = await http.get(url);
+
+      if (res.statusCode == 200) {
+        club = Club.fromJson(json.decode(res.body));
+        setState(() {
+          _clubdata = club!.data;
+          //lien = news!.links;
+          _isFistLoadRunning = false;
+        });
+        //log("Post 1 ${_clubdata[0].name}");
+      }
+    } catch (err) {
+      log("message $err");
+      if (kDebugMode) {
+        print("Something went wrong");
+      }
+      _isFistLoadRunning = false;
+    }
+  }
+
+  void _mocsLoad() async {
+    try {
+      final url = Uri.https(baseUrls, "api/moocs");
+      final res = await http.get(url);
+
+      if (res.statusCode == 200) {
+        mocs = Mocs.fromJson(json.decode(res.body));
+        setState(() {
+          _datamocs = mocs!.data;
+          //lien = news!.links;
+          _isFistLoadRunning = false;
+        });
+        //log("Post 1 ${_datamocs[1].name}");
+      }
+    } catch (err) {
+      log("message $err");
+      if (kDebugMode) {
+        print("Something went wrong");
+      }
+      _isFistLoadRunning = false;
+    }
+  }
+
   /*Future<void> getResources() async {
     try {
       String endpoint="resources";
@@ -124,35 +230,19 @@ class _HomePageState extends State<HomePage>  with SingleTickerProviderStateMixi
     // TODO: implement initState
     super.initState();
     //openPlayer();
-    getPublication();
-    getClubs();
-    getPApropos();
-    getMocs();
 
-    player.isPlaying.listen((event) {
-      if (mounted) {
-        setState(() {
-          isPlaying = event;
-        });
-      }
+    _isLoading = true;
+    Future.delayed(const Duration(seconds: 2), () {
+      setState(() {
+        _isLoading = false;
+      });
     });
-  }
-  // define a playlist for player
-  void openPlayer() async {
-    await player.open(
-      Audio.network(
-          dataUrlPublication['data'][0]['podcast'],
-          metas: Metas(
-            title: dataUrlPublication['data'][0]['podcast'],
-            artist: 'NF',
-            //image:  MetasImage.network(widget.image),
-          )
-
-      ),
-      showNotification: true,
-      autoStart: true,
-    );
-    //logger.w('bara player ',audios);
+    //getPApropos();
+    //getMocs();
+    _aboutLoad();
+    _publicationLoad();
+    _clubLoad();
+    _mocsLoad();
   }
 
   void pageChanged(int index) {
@@ -160,24 +250,13 @@ class _HomePageState extends State<HomePage>  with SingleTickerProviderStateMixi
       _page = index;
     });
   }
+
   Widget buildPageView() {
     return PageView(
       controller: pageController,
       onPageChanged: (index) {
         pageChanged(index);
         HomePage.idpage = index;
-        /*if (index == 0) {
-          title = "Accueil";
-        } else*/
-        /*if (index == 0) {
-          title = "Télévision";
-        } else if (index == 1) {
-          title = "Actualités";
-        } else if (index == 2) {
-          title = "YouTube";
-        } else if (index == 3) {
-          title = "Radio";
-        }*/
         if (index == 0) {
           title = "Publications";
         }
@@ -197,207 +276,130 @@ class _HomePageState extends State<HomePage>  with SingleTickerProviderStateMixi
       children: <Widget>[
         PublicationsPage(
           player: player,
-          dataUrlPublication: dataUrlPublication,
-          dataUrlClub:dataUrlClub,
-
+          news: news,
+          posts: _posts,
+          isFistLoadRunning: _isFistLoadRunning,
+          clubdata: _clubdata,
+          club: club,
         ),
         ClubsPage(
           player: player,
-          dataUrlClub: dataUrlClub,
+          clubdata: _clubdata,
+          club: club,
+          isLoading: _isLoading,
+          about: about,
         ),
         MoocsPage(
           player: player,
-          dataUrlPublication: dataUrlPublication,
-          dataUrlClub:dataUrlClub,
-          dataMocs: dataMocs,
+          mocs: mocs,
+          datamocs: _datamocs,
+          clubdata: _clubdata,
+          posts: _posts,
         ),
         ResourcePage(),
         AproposPage(
-          /*nameAbout: dataMocs,
-          image: dataUrlAbout['data']['image'],
-          about_lmt: dataUrlAbout['data']['about_lmt'],
-          tel: dataUrlAbout['data']['phone'],
-          email: dataUrlAbout['data']['email'],*/
+          about: about,
+          isFistLoadRunning: _isFistLoadRunning,
         ),
       ],
     );
   }
+
   @override
   void dispose() {
     // TODO: implement dispose
     super.dispose();
     pageController.dispose();
   }
-  @override
-  void setState(fn) {
-    if (mounted) super.setState(fn);
-  }
+
   @override
   Widget build(BuildContext context) {
+    //log("Post 1 ${about!.data.name}");
     return DefaultTabController(
       length: 4,
       key: _scaffoldKey,
       child: Scaffold(
-
         backgroundColor: Colors.white,
         appBar: AppBar(
           backgroundColor: Colors.white,
           centerTitle: true,
           elevation: 0,
-          title: Text(title,style: TextStyle(color: Colors.black),),
-          /*actions: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: Container(
-
-                width: 25,
-                height: 30,
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/alarme.png')
-                  )
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0),
-              child: Container(
-                width: 25,
-                height: 30,
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/parametre.png')
-                  )
-                ),
-              ),
-            ),
-
-          ],*/
+          title: Text(
+            title,
+            style: TextStyle(color: Colors.black),
+          ),
         ),
-        body: Stack(
-          alignment: Alignment.bottomLeft,
-            children: [
-              dataMocs !=null || dataMocs !=null? buildPageView():Center(child: CircularProgressIndicator(),),
-              /*player.getCurrentAudioImage == null
-                  ? const SizedBox.shrink()
-                  : FutureBuilder<PaletteGenerator>(
-                future: getImageColors(player),
-                builder: (context, snapshot) {
-                  return Container(
-                    margin: const EdgeInsets.symmetric(
-                        horizontal: 15, vertical: 5),
-                    height: 70,
-                    decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: const Alignment(0, 5),
-                            colors: [
-                              snapshot.data?.lightMutedColor?.color ??
-                                  Colors.grey,
-                              snapshot.data?.mutedColor?.color ?? Colors.grey,
-                            ]),
-                        borderRadius: BorderRadius.circular(20)),
-                    child: ListTile(
-                      leading: AnimatedBuilder(
-                        // rotate the song cover image
-                        animation: _animationController,
-                        builder: (_, child) {
-                          // if song is not playing
-                          if (!isPlaying) {
-                            _animationController.stop();
-                          } else {
-                            _animationController.forward();
-                            _animationController.repeat();
-                          }
-                          return Transform.rotate(
-                              angle: _animationController.value * 2 * math.pi,
-                              child: child);
-                        },
-                        child: CircleAvatar(
-                            radius: 30,
-                            backgroundColor: Colors.grey,
-                            backgroundImage: AssetImage(
-                                player.getCurrentAudioImage?.path ?? '')),
-                      ),
-                      onTap: () => Navigator.push(
-                            context,
-                            CupertinoPageRoute(
-                                fullscreenDialog: true,
-                                builder: (context) => PlayerPage(
-                                      player: player,
-                                    ))),
-                      title: Text(player.getCurrentAudioTitle),
-                      subtitle: Text(player.getCurrentAudioArtist),
-                      trailing: IconButton(
-                        padding: EdgeInsets.zero,
-                        onPressed: () async {
-                          await player.playOrPause();
-                        },
-                        icon: isPlaying
-                            ? const Icon(Icons.pause)
-                            : const Icon(Icons.play_arrow),
-                      ),
-                    ),
-                  );
-                },
-              ),*/
-          ]
-        ),
+        body: Stack(alignment: Alignment.bottomLeft, children: [
+          _isLoading
+              ? const Center(
+                  child: SpinKitWanderingCubes(
+                    color: Colors.green,
+                    size: 50.0,
+                  ),
+                )
+              : buildPageView(),
+        ]),
         bottomNavigationBar: salomonBottomNavigation(),
       ),
     );
   }
+
   Widget salomonBottomNavigation() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: SalomonBottomBar(
         currentIndex: _page,
         curve: Curves.ease,
-        onTap: (i) => setState((){
-          _page= i;
+        onTap: (i) => setState(() {
+          _page = i;
           pageController.animateToPage(i,
-              duration: Duration(milliseconds: 300), curve: Curves.ease);
+              duration: const Duration(milliseconds: 300), curve: Curves.ease);
         }),
         unselectedItemColor: Colors.black,
         selectedItemColor: Colors.green,
         items: [
           SalomonBottomBarItem(
-            icon: const Icon(Icons.podcasts,size: 30),
-            title: const Text("Publications",style: TextStyle(fontSize: 14),),
+            icon: const Icon(Icons.home_sharp, size: 30),
+            title: const Text(
+              "Publications",
+              style: TextStyle(fontSize: 14),
+            ),
             selectedColor: Colors.green,
             //unselectedColor: Colors.red
           ),
-
           SalomonBottomBarItem(
-            icon: const Icon(Icons.grid_view,size: 30),
-            title: const Text("Clubs",style: TextStyle(fontSize: 14)),
+            icon: const Icon(Icons.grid_view, size: 30),
+            title: const Text("Clubs", style: TextStyle(fontSize: 14)),
             selectedColor: Colors.green,
           ),
           SalomonBottomBarItem(
-            icon: const Icon(Icons.music_note,size: 30,),
-            title: const Text("Moocs",style: TextStyle(fontSize: 14)),
+            icon: const Icon(
+              Remix.book_fill,
+              size: 30,
+            ),
+            title: const Text("Moocs", style: TextStyle(fontSize: 14)),
             selectedColor: Colors.green,
           ),
           SalomonBottomBarItem(
-            icon: const Icon(Icons.info,size: 30),
-            title: const Text("Resources",style: TextStyle(fontSize: 14)),
+            icon: const Icon(Remix.database_fill, size: 30),
+            title: const Text("Resources", style: TextStyle(fontSize: 14)),
             selectedColor: Colors.green,
           ),
           SalomonBottomBarItem(
-            icon: const Icon(Icons.info,size: 30),
-            title: const Text("A propos",style: TextStyle(fontSize: 14)),
+            icon: const Icon(Icons.info, size: 30),
+            title: const Text("A propos", style: TextStyle(fontSize: 14)),
             selectedColor: Colors.green,
           ),
-
         ],
       ),
     );
   }
+
   void gotoScreen(int index) {
     toggleDrawer();
     _page = index;
     pageController.animateToPage(index,
-        duration: Duration(milliseconds: 500), curve: Curves.ease);
+        duration: const Duration(milliseconds: 500), curve: Curves.ease);
   }
 
   toggleDrawer() async {
@@ -407,6 +409,4 @@ class _HomePageState extends State<HomePage>  with SingleTickerProviderStateMixi
       _scaffoldKey.currentState!.openDrawer();
     }
   }
-
-
 }

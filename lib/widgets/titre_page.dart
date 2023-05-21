@@ -20,7 +20,7 @@ class TitrePage extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            Text(title!,style: TextStyle(color: color,fontSize: size!,fontWeight: FontWeight.bold),),
+            Text(title!,style: TextStyle(color: color,fontSize: size!,fontWeight: FontWeight.w500),),
             const SizedBox(width: 20,),
             Icon(Icons.arrow_forward_ios_sharp,color: color,size: 18,)
           ],

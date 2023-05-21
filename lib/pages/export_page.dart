@@ -13,4 +13,9 @@ export 'package:flutter_podcast/pages/details_publication_page.dart';
 export 'package:flutter_podcast/pages/player_type_page.dart';
 export 'package:flutter_podcast/pages/details_publication_club_page.dart';
 export 'package:flutter_podcast/pages/video_player.dart';
+export 'package:flutter_podcast/pages/recherche_page.dart';
+export 'package:flutter_podcast/pages/plus_de_publiction_page.dart';
+export 'package:flutter_podcast/pages/plus_de_moocs_page.dart';
+export 'package:flutter_podcast/pages/plus_de_resource_page.dart';
+export 'package:flutter_podcast/pages/plus_de_club_page.dart';
 

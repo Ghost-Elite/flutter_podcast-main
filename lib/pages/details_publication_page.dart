@@ -25,6 +25,7 @@ class _DetailsPublicationPageState extends State<DetailsPublicationPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        centerTitle: true,
         iconTheme: IconThemeData(color: Colors.black),
         title: Text("Publication",style: TextStyle(color: Colors.black),),
       ),
@@ -56,7 +57,7 @@ class _DetailsPublicationPageState extends State<DetailsPublicationPage> {
                 ),
               ),
               SizedBox(height: 10,),
-              Row(
+              /*Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   IconButton(
@@ -66,7 +67,7 @@ class _DetailsPublicationPageState extends State<DetailsPublicationPage> {
                   }, icon: Icon(Icons.date_range_sharp,color: Colors.green,)),
                   Text(Jiffy.parse(widget.date, pattern: "yyyy-MM-ddTHH").format(pattern: "dd-MM-yyyy"))
                 ],
-              ),
+              ),*/
               SizedBox(height: 20,),
               HtmlWidget(
                 widget.pubUrl,
